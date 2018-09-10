@@ -32,8 +32,6 @@ library(Seurat)
 library(dplyr)
 library(Matrix)
 library(gdata)
-
-# figures.dir = ?
 ```
 
 ### Read in NSCLC counts matrix.
@@ -86,7 +84,7 @@ genes_per_cell <- Matrix::colSums(counts>0) # count gene only if it has non-zero
 cells_per_gene <- Matrix::rowSums(counts>0) # only count cells where the gene is expressed
 ```
 
-colSums and rowSums are function that work on each row or column in a matrix and return the column sums or row sums as a vector. If this is true counts_per_cell should have 1 entry per cell, let's make sure the length of the returned vector matches the matrix dimension for column. How would you do that? ( Hint:length() ).
+colSums and rowSums are functions that work on each row or column in a matrix and return the column sums or row sums as a vector. If this is true counts_per_cell should have 1 entry per cell. Let's make sure the length of the returned vector matches the matrix dimension for column. How would you do that? ( Hint:length() ).
 
 Notes:
 1. Matrix::colSums is a way to force functions from the Matrix library to be used. There are many libraries that implement colSums, we are forcing the one from the Matrix library to be used here to make sure it handles the dgTmatrix (sparse matrix) correctly. This is good practice.
@@ -94,7 +92,8 @@ Notes:
 ```{r}
 hist(log10(counts_per_cell+1),main='counts per cell',col='wheat')
 hist(log10(genes_per_cell+1), main='genes per cell', col='wheat')
-plot(counts_per_cell, genes_per_cell, log='xy', col='wheat')
+plot(counts_per_cell, genes_per_cell, log='xy', col='wheat') 
+title('counts vs genes per cell')
 hist(log10(counts_per_gene+1),main='counts per gene',col='wheat')
 ```
 
@@ -125,6 +124,7 @@ plot(sort(genes_per_cell), xlab='cell', log='y', main='genes per cell (ordered)'
 abline(h=MIN_GENES_PER_CELL, col='magenta')  # lower threshold
 abline(h=MAX_GENES_PER_CELL, col='gold') # upper threshold
 ```
+
 These cutoffs should not be viewed as very exact but instead should be viewed as something you have a general range to select within.
 
 *** Advanced Challenge ***
@@ -152,8 +152,8 @@ Feel free to try to search for other genes or gene families, make sure NOT to st
 # compute pct mito
 mito_gene_read_counts = Matrix::colSums(counts[mito_genes,])
 pct_mito = mito_gene_read_counts / counts_per_cell * 100
-plot(sort(pct_mito))
-boxplot(pct_mito)
+plot(sort(pct_mito), xlab = "cells sorted by percentage mitochondrial counts", ylab = "percentage mitochondrial counts")
+boxplot(pct_mito, ylab = "percentage mitochondrial counts")
 ```
 
 Now that we have the mitochondrial genes, we select them from the matrix and calculate the total counts in each cell coming from those genes. We then take those results and the fraction of those mitochondrial counts in the relation to all counts to calculate a percentage of mitochondrial counts.
@@ -195,7 +195,7 @@ qc.df <- qc.df[order(qc.df$counts_per_cell),] # order by counts_per_cell
 plot(qc.df, log='xy')
 qc.model <- rlm(genes_per_cell~counts_per_cell,data=qc.df) # robust linear model, not sensitive to outliers
 summary(qc.model) # See the model results
-p.level <- 1e-3 # Set our p-value cutt-off
+p.level <- 1e-3 # Set our p-value cut-off
 # predict genes_per_cell based on observed counts_per_cell
 suppressWarnings(pb <- data.frame(predict(qc.model, interval='prediction', 
                                           level=1-p.level,
@@ -215,9 +215,11 @@ plot(qc.df, log='xy')
 polygon(c(qc.df$counts_per_cell, rev(qc.df$counts_per_cell)),
         c(pb$lwr, rev(pb$upr)), col=adjustcolor(2,alpha=0.1), border = NA)
 points(qc.df[outliers,],col=2,cex=0.6)
-# See the names of the outliers, these can be used in subsetting
+# See the names of the outliers, which can be used in subsetting the data.
 print(outliers)
 ```
+
+What do you think can cause the two different types of outliers (above and below the confidence interval)?
 
 Here we see we can select the outliers outside the polygon / confidence interval by selecting cells with greater complexity than the upper bounds or lower complexity than the lower bounds of the confidence internval. We select those cells, store their names (the row names), and plot them in red or print them out.
 
@@ -229,7 +231,7 @@ summary(pb)
 
 ### Removing low-quality cells
 
-Ok, we showed you 3 different ways to filter cells. Why? Well first, it is good practice! Second, filtering on just one QC metric has the potential to be confounded with biology while if several QC metrics agree there is more evidence that the cells are actually bad. But that being said, it is about time we start filtering cells.
+Ok, we showed you 3 different ways to filter cells: using number of detected genes per cell, removing cells with high percentage of mitochondrial reads, and looking for outliers via the Pagoda method. Why so many filters? Well first, it is good practice! Second, filtering on just one QC metric has the potential to be confounded with biology while if several QC metrics agree there is more evidence that the cells are actually bad. But that being said, it is about time we start filtering cells.
 
 ```{r}
 # prune cells
@@ -282,7 +284,7 @@ seurat@raw.data[1:10,1:10]
 
 ## Preprocessing step 1 : Filter out low-quality cells
 
-The Seurat object initialization step above only considered cells that expressed at least 350 genes. Additionally, we would like to exclude cells that are damaged. A common metric to judge this (although by no means the only one ) is the relative expression of mitochondrially derived genes. When the cells apoptose due to stress, their mitochondria becomes leaky and there is widespread RNA degradation. Thus a relative enrichment of mitochondrially derived genes can be a tell-tale sign of cell stress. Here, we compute the proportion of transcripts that are of mitochondrial origin for every cell (`percent.mito`), and visualize its distribution as a violin plot. We also use the `GenePlot` function to observe how `percent.mito` correlates with other metrics. We have done much of this before without the use of Seurat; here we see how to do this using Seurat.
+The Seurat object initialization step above only considered cells that expressed at least 350 genes. Additionally, we would like to exclude cells that are damaged. A common metric to judge this (although by no means the only one) is the relative expression of mitochondrially derived genes. When the cells apoptose due to stress, their mitochondria becomes leaky and there is widespread RNA degradation. Thus a relative enrichment of mitochondrially derived genes can be a tell-tale sign of cell stress. Here, we compute the proportion of transcripts that are of mitochondrial origin for every cell (`percent.mito`), and visualize its distribution as a violin plot. We also use the `GenePlot` function to observe how `percent.mito` correlates with other metrics. We have done much of this before without the use of Seurat; here we see how to do this using Seurat.
 
 ```{r, cache.lazy=FALSE, tidy=TRUE, tidy.opts=list(width.cutoff=120), fig.width= 12, fig.height=6.5}
 # The number of genes and UMIs (nGene and nUMI) are automatically calculated
@@ -295,9 +297,8 @@ The Seurat object initialization step above only considered cells that expressed
 mito.genes <- grep(pattern = "^MT-", x = rownames(x = seurat@data), value = TRUE)
 percent.mito <- Matrix::colSums(seurat@raw.data[mito.genes, ])/Matrix::colSums(seurat@raw.data)
 
-# AddMetaData adds columns to object@meta.data, and is a great place to
-# stash QC stats
-# this also allows us to plot the metadata values using the Seurat's VlnPlot()
+# AddMetaData adds columns to object@meta.data, and is a great place to stash QC stats.
+# This also allows us to plot the metadata values using the Seurat's VlnPlot().
 head(seurat@meta.data) # Before adding
 seurat <- AddMetaData(object = seurat, metadata = percent.mito, col.name = "percent.mito")
 head(seurat@meta.data) # After adding
@@ -307,14 +308,11 @@ VlnPlot(object = seurat, features.plot = c("nGene", "nUMI", "percent.mito"), nCo
 Here we calculated the percent mitochondrial reads (as we did before) and added it to the Seurat object in the slot named meta.data. This allowed us to plot using the violin plot function provided by Seurat.
 
 ```{r}
-# GenePlot is typically used to visualize gene-gene relationships, but can
-# be used for anything calculated by the object, i.e. columns in
-# object@meta.data, PC scores etc.  Since there is a rare subset of cells
-# with an outlier level of high mitochondrial percentage and also low UMI
-# content, we filter these as well
 GenePlot(object = seurat, gene1 = "nUMI", gene2 = "percent.mito")
 GenePlot(object = seurat, gene1 = "nUMI", gene2 = "nGene")
 ```
+
+GenePlot is typically used to visualize gene-gene relationships, but can be used for anything calculated by the object, i.e. columns in object@meta.data, PC scores etc.  Since there is a rare subset of cells with an outlier level of high mitochondrial percentage and also low UMI content, we filter these as well. The title of these plots is the Pearson correlation between the two variables: percent.mito vs nUMI or nGene vs nUMI.
 
 ## Examine contents of Seurat object
 ```{r}
@@ -386,7 +384,7 @@ Now that we have performed PCA, we can plot metadata and genes on the cell group
 FeaturePlot(seurat, dim.1=1, dim.2=2, reduction.use='pca', features.plot=c("nGene","percent.mito"))
 ```
 
-How would you plot the same plot using component 2 and component 3? If we wanted to save the Seurat object we could use the save function (and later load the object with load(). We are not going to do this now, but this is one of the ways to share analysis, by saving and sharing Seurat R objects.
+How would you plot the same plot using component 2 and component 3? If we wanted to save the Seurat object we could use the save function (and later load the object with load()). We are not going to do this now, but this is one of the ways to share analysis, by saving and sharing Seurat R objects.
 
 ```{r saveobject}
 # save(seurat, file = "nsclc.Rda")
@@ -420,11 +418,8 @@ TSNEPlot(object = seurat)
 ## Visualization by UMAP
 
 UMAP is a much faster visualization than tSNE and may preserve more of the global structure in your data. The preprint for the method is available at (https://arxiv.org/abs/1802.03426).
-pip install umap-learn --user
-```{r}
-# library(reticulate)
-# use_condaenv("seurat")  # loading my conda environment
 
+```{r}
 seurat <- RunUMAP(object = seurat, dims.use = 1:20, seed.use = 1)
 DimPlot(object = seurat, reduction.use = "umap", do.return = TRUE, pt.size = 0.5) + ggtitle("UMAP") + theme(plot.title = element_text(hjust = 0.5))
 ```
@@ -561,8 +556,7 @@ head(all.markers.sortedByPval)
 ## Make a heatmap showing the top 10 marker genes for each cluster
 We can also make heat maps of the top markers for each cluster.
 
-```{r}
-library(dplyr)
+```{r, fig.height = 7}
 top10 <- all.markers.sortedByPval %>%  group_by(cluster)  %>% do(head(., n=10))
 DoHeatmap(object = seurat, genes.use = top10$gene, slim.col.label = TRUE, remove.key = TRUE)
 ```
