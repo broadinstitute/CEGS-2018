@@ -45,17 +45,6 @@ RUN usermod -a -G sudo training
 RUN apt-get install -y openssh-server libncurses5-dev apache2 supervisor
 
 
-#########
-### GateOne SSH interface
-#########
-RUN git clone https://github.com/liftoff/GateOne/ && \
-    cd GateOne && python setup.py install && \
-            pip install tornado==4.5.3 && \
-                        python run_gateone.py --configure
-
-
-
-
 EXPOSE 22 80 443 8787
 
 RUN Rscript -e 'source("http://bioconductor.org/biocLite.R");library(BiocInstaller); biocLite("devtools", dep = TRUE)'
@@ -68,34 +57,6 @@ RUN Rscript -e 'source("http://bioconductor.org/biocLite.R");library(BiocInstall
 ##
 
 RUN apt-get install -y libhdf5-dev
-
-RUN Rscript -e 'install.packages("/usr/local/src/caTools_1.17.1.mod.tar.gz", repos=NULL, type="source");'
-
-RUN Rscript -e 'library(devtools); install_github("satijalab/seurat", ref = "develop");'
-
-
-# needed for combat
-RUN Rscript -e 'source("http://bioconductor.org/biocLite.R");library(BiocInstaller); biocLite("sva", dep = TRUE)'
-
-# needed for seurat clustering (hopefully not in a future seurat release)
-RUN chmod 777 /usr/local/lib/R/site-library
-
-
-
-
-
-
-
-
-##################
-####  singleCellTK
-
-
-RUN Rscript -e 'source("http://bioconductor.org/biocLite.R");library(BiocInstaller); biocLite("singleCellTK", dep = TRUE);'
-
-
-
-
 
 
 ## auto-run setup
@@ -110,21 +71,6 @@ CMD ["/usr/bin/supervisord","-c","/etc/supervisor/conf.d/supervisord.conf"]
 
 
 RUN Rscript -e 'library(devtools); install_github("satijalab/seurat", ref = "develop");'
-
-
-## for Matan:
-
-RUN Rscript -e 'source("http://bioconductor.org/biocLite.R");library(BiocInstaller); biocLite("AUCell", dep = TRUE);'
-
-RUN Rscript -e 'source("http://bioconductor.org/biocLite.R");library(BiocInstaller); biocLite("destiny", dep = TRUE);'
-
-RUN Rscript -e 'source("http://bioconductor.org/biocLite.R");library(BiocInstaller); biocLite("fgsea", dep = TRUE);'
-
-RUN Rscript -e 'source("http://bioconductor.org/biocLite.R");library(BiocInstaller); biocLite("DropletUtils", dep = TRUE);'
-
-RUN Rscript -e 'source("http://bioconductor.org/biocLite.R");library(BiocInstaller); biocLite("precrec", dep = TRUE);'
-
-RUN Rscript -e 'source("http://bioconductor.org/biocLite.R");library(BiocInstaller); biocLite("pbapply", dep = TRUE);'
 
 
 
