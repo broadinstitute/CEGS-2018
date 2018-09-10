@@ -75,8 +75,8 @@ RUN Rscript -e 'library(devtools); install_github("satijalab/seurat", ref = "dev
 
 RUN Rscript -e 'source("http://bioconductor.org/biocLite.R");library(BiocInstaller); biocLite("GSA", dep = TRUE)'
 
-pip install numpy scipy
-pip install scikit-learn
-pip install numba
-pip install umap-learn
+RUN pip install numpy scipy
+RUN pip install scikit-learn
+RUN pip install numba
+RUN pip install umap-learn
 
