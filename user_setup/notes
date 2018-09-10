@@ -1,0 +1,17 @@
+CEGS-2018/user_setup/init_users.py  \
+         --num_users 100 \
+         --user_id_start 1 \
+         --ssh_base_port 10001 | tee launch.cmds
+         
+Launch the docker instances:
+
+    sudo sh ./launch.cmds
+    
+    
+Visit one of the Rstudio instances:
+
+    http://${GCE.IP.ADDRESS}:${PORT}
+    
+    where ${GCE.IP.ADDRESS} is the IP address of your google compute engine machine
+    and ${PORT} is the port number assigned to that docker instance.
+    
