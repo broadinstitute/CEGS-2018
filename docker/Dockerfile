@@ -73,5 +73,10 @@ CMD ["/usr/bin/supervisord","-c","/etc/supervisor/conf.d/supervisord.conf"]
 RUN Rscript -e 'library(devtools); install_github("satijalab/seurat", ref = "develop");'
 
 
+RUN Rscript -e 'source("http://bioconductor.org/biocLite.R");library(BiocInstaller); biocLite("GSA", dep = TRUE)'
 
+pip install numpy scipy
+pip install scikit-learn
+pip install numba
+pip install umap-learn
 
