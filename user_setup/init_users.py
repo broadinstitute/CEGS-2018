@@ -12,9 +12,9 @@ logging.basicConfig(stream=sys.stderr, level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-docker_image = "trinityctat/scellismb2018"
+docker_image = "broadcegs/scell2018"
 
-resources_dir = "/data/SINGLE_CELL/single_cell_data_ro"
+resources_dir = "/data/shared_ro"
 
 def main():
 
