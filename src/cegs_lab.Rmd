@@ -530,13 +530,13 @@ How did this work? We took the original cluster identities (originally by defaul
 In the above code, we have identified several clusters of immune cells. However we also expect to see cell clusters consisting of stromal cells and/or malignant cells in this NSCLC sample. For some of these cell subsets, we may not have pre-existing marker genes that suggest the cell type. To help identify these cells, we look for genes that are differentially expressed in these clusters relative to all other clusters. 
 
 ```{r}
-MIN_LOGFOLD_CHANGE = 1 # set to minimum required average log fold change in gene expression.
-MIN_PCT_CELLS_EXPR_GENE = 0.2  # minimum percent of cells that must express gene in either clstr.
+MIN_LOGFOLD_CHANGE = 2 # set to minimum required average log fold change in gene expression.
+MIN_PCT_CELLS_EXPR_GENE = .2  # minimum percent of cells that must express gene in either clstr.
 
 # Here we find all markers for 
 all.markers = FindAllMarkers(seurat,
                              min.pct = MIN_PCT_CELLS_EXPR_GENE,
-                             thresh.use = MIN_LOGFOLD_CHANGE,
+                             logfc.threshold = MIN_LOGFOLD_CHANGE,
                              only.pos = TRUE,
                              test.use="bimod") # likelihood ratio test
 ```
@@ -565,7 +565,7 @@ Based on these differentially expressed genes, can you identify additional cell 
 
 You can save the object at this point so that it can easily be loaded back into an R session without having to rerun the computationally intensive steps performed above, or easily shared with collaborators.
 ```{r}
-save(seurat, all.markers, file = "~/shared_ro/gene_lists/nsclc.Rda")
+save(seurat, all.markers, file = "/home/training/nsclc.Rda")
 ```
 
 
